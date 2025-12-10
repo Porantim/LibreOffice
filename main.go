@@ -26,7 +26,6 @@ func init() {
 
 func convertHandler(w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
-		// http.Error(w, "Somente o método POST é aceito.", http.StatusMethodNotAllowed)
 		sendError(w, "Somente o método POST é aceito.", http.StatusMethodNotAllowed, "")
 		return
 	}
@@ -35,15 +34,12 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 	ext := r.Header.Get("X-File-Extension")
 	if ext == "" {
 		ext = "docx"
-		// http.Error(w, "O header X-File-Extension é obrigatório.", http.StatusBadRequest)
-		// return
 	}
 
 	// Ler corpo bruto (binário)
 	r.Body = http.MaxBytesReader(w, r.Body, maxFileSize)
 	inputBytes, err := io.ReadAll(r.Body)
 	if err != nil {
-		// http.Error(w, "Erro ao ler o arquivo de entrada.", http.StatusBadRequest)
 		sendError(w, "Erro ao ler o arquivo de entrada.", http.StatusBadRequest, err.Error())
 		return
 	}
@@ -51,7 +47,6 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 	// Criar arquivos temporários
 	inputFile, err := os.CreateTemp(tempDir, "in_*." + ext)
 	if err != nil {
-		// http.Error(w, "Erro ao criar o arquivo temporário de entrada.", http.StatusInternalServerError)
 		sendError(w, "Erro ao criar o arquivo temporário de entrada.", http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -59,7 +54,6 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 
 	outputFile, err := os.CreateTemp(tempDir, "out_*.pdf")
 	if err != nil {
-		// http.Error(w, "Erro ao criar o arquivo de saída.", http.StatusInternalServerError)
 		sendError(w, "Erro ao criar o arquivo de saída.", http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -67,7 +61,6 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 
 	// Escrever arquivo de entrada
 	if _, err := inputFile.Write(inputBytes); err != nil {
-		// http.Error(w, "Erro ao escrever no arquivo.", http.StatusInternalServerError)
 		sendError(w, "Erro ao escrever no arquivo.", http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -90,7 +83,6 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 
 	if err := cmd.Run(); err != nil {
 		log.Printf("Falha na conversão da extensão '%s': %v | stderr: %s | stdout: %s", ext, err, stderr.String(), stdout.String())
-		//http.Error(w, "Falha na conversão.", http.StatusInternalServerError)
 		sendError(w, "Falha na conversão.", http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -98,7 +90,6 @@ func convertHandler(w http.ResponseWriter, r *http.Request) {
 	// Ler e retornar PDF
 	pdfBytes, err := os.ReadFile(outputFile.Name())
 	if err != nil {
-		// http.Error(w, "Falha ao ler o PDF criado.", http.StatusInternalServerError)
 		sendError(w, "Falha ao ler o PDF criado.", http.StatusInternalServerError, err.Error())
 		return
 	}
@@ -114,9 +105,12 @@ func healthHandler(w http.ResponseWriter, r *http.Request) {
 	w.Write([]byte("OK"))
 }
 
+
+
 func main() {
 	http.HandleFunc("/convert", convertHandler)
 	http.HandleFunc("/health", healthHandler)
+	http.HandleFunc("/swagger", func(w http.ResponseWriter, r *http.Request) { http.ServeFile(w, r, "swagger.json") })
 	log.Println("Conversor para PDF do LibreOffice escutando a porta 8080")
 	log.Fatal(http.ListenAndServe(":8080", nil))
 }

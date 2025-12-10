@@ -19,6 +19,7 @@ ENV PATH="/usr/local/go/bin:${PATH}"
 # Copiar código
 WORKDIR /app
 COPY main.go .
+COPY swagger.json .
 
 # Build do Go app
 RUN go mod init writer-converter && \

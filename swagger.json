@@ -1,0 +1,142 @@
+{
+  "openapi": "3.0.3",
+  "info": {
+    "title": "LibreOffice Writer PDF Converter API",
+    "description": "Serviço REST para conversão de documentos do LibreOffice Writer (ex: .docx, .odt) para PDF, usando LibreOffice em modo listener via `unoserver`.\n\n**Atenção**: O serviço aceita qualquer binário, mas a conversão só funcionará se o formato for compatível com o LibreOffice Writer. Caso contrário, retornará erro 500.",
+    "version": "1.0.0",
+    "contact": {
+      "name": "Equipe de Infraestrutura"
+    },
+    "license": {
+      "name": "MIT"
+    }
+  },
+  "servers": [
+    {
+      "url": "http://localhost:8080",
+      "description": "Ambiente local (substitua em produção)"
+    }
+  ],
+  "paths": {
+    "/convert": {
+      "post": {
+        "summary": "Converte um documento para PDF",
+        "description": "Envia um arquivo binário e recebe o PDF convertido.\nO tipo de arquivo deve ser indicado via cabeçalho `X-File-Extension`.",
+        "operationId": "convertToPdf",
+        "parameters": [
+          {
+            "name": "X-File-Extension",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "example": "docx"
+            },
+            "description": "Extensão do arquivo de entrada (ex: `docx`, `odt`, `rtf`).\nUsada para nomear o arquivo temporário e permitir que o LibreOffice detecte o formato corretamente.\nSe nada for informado, a extensão docx é usada."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/octet-stream": {
+              "schema": {
+                "type": "string",
+                "format": "binary"
+              },
+              "examples": {
+                "docxFile": {
+                  "summary": "Arquivo DOCX a ser convertido",
+                  "value": "Binário do arquivo .docx"
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Arquivo PDF convertido com sucesso",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Requisição inválida (ex: corpo vazio)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "405": {
+            "description": "Método não permitido (somente POST)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Erro interno durante a conversão (ex: formato não suportado)",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/Error"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/health": {
+      "get": {
+        "summary": "Verifica se o serviço está saudável",
+        "operationId": "healthCheck",
+        "responses": {
+          "200": {
+            "description": "Serviço está OK",
+            "content": {
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "example": "OK"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "Error": {
+        "type": "object",
+        "properties": {
+          "code": {
+            "type": "integer",
+            "example": 500
+          },
+          "message": {
+            "type": "string",
+            "example": "Falha na conversão."
+          },
+          "details": {
+            "type": "string",
+            "example": "Unable to load document: format not recognized."
+          }
+        },
+        "required": ["code", "message"]
+      }
+    }
+  }
+}
