@@ -1,4 +1,4 @@
-#PDF Conversion service
+# LibreOffice to PDF conversion service
 
 by [@Porantim](https://github.com/Porantim)
 
